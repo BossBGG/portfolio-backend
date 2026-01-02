@@ -16,7 +16,10 @@ import { awardController } from "./controllers/awards.controller";
 import { authMiddleware } from "./middlewares/auth.middleware";
 
 const app = new Elysia()
-  .use(cors())
+  .use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+  }))
   .use(
     swagger({
       documentation: {
@@ -40,7 +43,9 @@ const app = new Elysia()
     })
   )
 
-  // Public Routes
+  // ============================================
+  // PUBLIC ROUTES
+  // ============================================
   .group("/api", (app) =>
     app
       // --- Auth ---
@@ -60,81 +65,89 @@ const app = new Elysia()
         detail: { tags: ["Public"] },
       })
 
-      // --- Timeline (Experience/Education) ---
+      // --- Timeline ---
       .get("/timelines", timelineController.getAll, {
         detail: { tags: ["Public"] },
       })
+
       // --- Tech Stacks ---
       .get("/tech-stacks", techController.getAll, {
         detail: { tags: ["Public"] },
       })
-      // --- Info (About & Contact) ---
+
+      // --- Info ---
       .get("/about", infoController.getAbout, { detail: { tags: ["Public"] } })
       .get("/contact", infoController.getContact, {
         detail: { tags: ["Public"] },
       })
+
       // --- Events ---
       .get("/events", eventController.getAll, { detail: { tags: ["Public"] } })
+
       // --- Awards ---
       .get("/awards", awardController.getAll, { detail: { tags: ["Public"] } })
   )
 
-  // Admin Routes
-  .group("/api/admin", (app) => app)
-  .use(authMiddleware) // เรียกใช้ Middleware ตรวจสอบ Token
+  // ============================================
+  // ADMIN ROUTES (Protected)
+  // ============================================
+  .group("/api/admin", (app) =>
+    app
+      .use(authMiddleware) // ใช้ middleware ตรวจสอบ authentication
 
-  // --- Auth Management ---
-  .get("/profile", authController.getProfile, { detail: { tags: ["Admin"] } })
-  .post("/logout", authController.logout, { detail: { tags: ["Admin"] } })
+      // --- Auth Management ---
+      .get("/profile", authController.getProfile, { detail: { tags: ["Admin"] } })
+      .post("/logout", authController.logout, { detail: { tags: ["Admin"] } })
 
-  // --- Project Management ---
-  .post("/projectss", projectController.create, { detail: { tags: ["Admin"] } })
-  .put("/projects/:id", projectController.update, {
-    detail: { tags: ["Admin"] },
-  })
-  .delete("/projects/:id", projectController.delete, {
-    detail: { tags: ["Admin"] },
-  })
+      // --- Project Management ---
+      .post("/projects", projectController.create, { detail: { tags: ["Admin"] } }) // ✅ แก้จาก /projectss
+      .put("/projects/:id", projectController.update, {
+        detail: { tags: ["Admin"] },
+      })
+      .delete("/projects/:id", projectController.delete, {
+        detail: { tags: ["Admin"] },
+      })
 
-  // --- Timeline Management ---
-  .post("/timelines", timelineController.create, {
-    detail: { tags: ["Admin"] },
-  })
-  .put("/timelines/:id", timelineController.update, {
-    detail: { tags: ["Admin"] },
-  })
-  .delete("/timelines/:id", timelineController.delete, {
-    detail: { tags: ["Admin"] },
-  })
+      // --- Timeline Management ---
+      .post("/timelines", timelineController.create, {
+        detail: { tags: ["Admin"] },
+      })
+      .put("/timelines/:id", timelineController.update, {
+        detail: { tags: ["Admin"] },
+      })
+      .delete("/timelines/:id", timelineController.delete, {
+        detail: { tags: ["Admin"] },
+      })
 
-  // --- Tech Stack Management ---
-  .post("/tech-stacks", techController.create, { detail: { tags: ["Admin"] } })
-  .put("/tech-stacks/:id", techController.update, {
-    detail: { tags: ["Admin"] },
-  })
-  .delete("/tech-stacks/:id", techController.delete, {
-    detail: { tags: ["Admin"] },
-  })
+      // --- Tech Stack Management ---
+      .post("/tech-stacks", techController.create, { detail: { tags: ["Admin"] } })
+      .put("/tech-stacks/:id", techController.update, {
+        detail: { tags: ["Admin"] },
+      })
+      .delete("/tech-stacks/:id", techController.delete, {
+        detail: { tags: ["Admin"] },
+      })
 
-  // --- Info Management ---
-  .post("/about", infoController.upsertAbout, { detail: { tags: ["Admin"] } })
-  .post("/contact", infoController.upsertContact, {
-    detail: { tags: ["Admin"] },
-  })
+      // --- Info Management ---
+      .post("/about", infoController.upsertAbout, { detail: { tags: ["Admin"] } })
+      .post("/contact", infoController.upsertContact, {
+        detail: { tags: ["Admin"] },
+      })
 
-  // --- Event Management ---
-  .post("/events", eventController.create, { detail: { tags: ["Admin"] } })
-  .put("/events/:id", eventController.update, { detail: { tags: ["Admin"] } })
-  .delete("/events/:id", eventController.delete, {
-    detail: { tags: ["Admin"] },
-  })
+      // --- Event Management ---
+      .post("/events", eventController.create, { detail: { tags: ["Admin"] } })
+      .put("/events/:id", eventController.update, { detail: { tags: ["Admin"] } })
+      .delete("/events/:id", eventController.delete, {
+        detail: { tags: ["Admin"] },
+      })
 
-  // --- Award Management ---
-  .post("/awards", awardController.create, { detail: { tags: ["Admin"] } })
-  .put("/awards/:id", awardController.update, { detail: { tags: ["Admin"] } })
-  .delete("/awards/:id", awardController.delete, {
-    detail: { tags: ["Admin"] },
-  })
+      // --- Award Management ---
+      .post("/awards", awardController.create, { detail: { tags: ["Admin"] } })
+      .put("/awards/:id", awardController.update, { detail: { tags: ["Admin"] } })
+      .delete("/awards/:id", awardController.delete, {
+        detail: { tags: ["Admin"] },
+      })
+  )
 
   .listen(8080);
 
